@@ -1,16 +1,20 @@
-
-
 # Introduction
+
+### Where It All Began
+
+### The Goals
+
+
+# General Work
+
+### Dynamic Feature Detection
 
 
 # Challenges
 
 ### Intrinsic Discovery
 
-
-# Improvements
-
-### Dynamic Feature Detection
+### LLVM
 
 
 # Implementation Details
@@ -28,4 +32,5 @@
 # Conclusion
 
 ### Lessons Learned
+
 ### Future Work
