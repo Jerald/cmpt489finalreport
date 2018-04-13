@@ -2,8 +2,8 @@
 
 Title will be some weird BS inline HTML.
 
-# Example h1
-**H1:** Section header (Intro, Improvements, Future, Conclusion, etc) are h2.
+## Example h2
+**H2:** Section header (Intro, Improvements, Future, Conclusion, etc) are h2.
 
 ### Example h3
 **H3:** Partitioning sections into different topics are h3.
