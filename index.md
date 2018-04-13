@@ -1,4 +1,4 @@
-## Introduction
+# Introduction
 
 We are Team AVX-512. "We" consists of Avery Crespi, Cole Greer, and Oscar Smith-Sieger. Our project is a
 
@@ -14,19 +14,19 @@ At that point in time icgrep had no specific support for AVX-512. And in fact, a
 ### The Goals
 
 
-## General Work
+# General Work
 
 ### Dynamic Feature Detection
 
 
-## Challenges
+# Challenges
 
 ### Intrinsic Discovery
 
 ### LLVM
 
 
-## Implementation Details
+# Implementation Details
 
 ### hsimd_packh and hsimd_packl
 
@@ -35,10 +35,10 @@ At that point in time icgrep had no specific support for AVX-512. And in fact, a
 ### esimd_bitspread
 
 
-## Implementation Evaluation
+# Implementation Evaluation
 
 
-## Conclusion
+# Conclusion
 
 ### Lessons Learned
 
