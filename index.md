@@ -1,25 +1,25 @@
-# <div style="font-size: 64px">Title</div>
+
 
 # Introduction
 
 
 # Challenges
 
-## Intrinsic Discovery
+### Intrinsic Discovery
 
 
 # Improvements
 
-## Dynamic Feature Detection
+### Dynamic Feature Detection
 
 
 # Implementation Details
 
-## hsimd_packh and hsimd_packl
+### hsimd_packh and hsimd_packl
 
-## esimd_popcount
+### esimd_popcount
 
-## esimd_bitspread
+### esimd_bitspread
 
 
 # Implementation Evaluation
@@ -27,5 +27,5 @@
 
 # Conclusion
 
-## Lessons Learned
-## Future Work
+### Lessons Learned
+### Future Work
