@@ -1,4 +1,4 @@
-<h1><div style="font-size: 64px">Title</div></h1>
+# <div style="font-size: 64px">Title</div>
 
 # Introduction
 
