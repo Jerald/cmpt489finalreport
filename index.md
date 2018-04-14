@@ -75,28 +75,28 @@ Now this may not seem like it was that useful, and initially, it wasn't. But one
 
 #### The Second Finding
 
-By searching through the icgrep directory like that we turned up a number of things, most of them useless. But it were two lines which were of interest to use:
+By searching through the icgrep directory like that we turned up a number of things, most of them useless. But there were two lines which were of interest to us:
 
 ```cpp
 return Intrinsic::x86_avx512_mask_pmov_wb_512;    // "__builtin_ia32_pmovwb512_mask"
 GCCBuiltin<"__builtin_ia32_pmovwb512_mask">,
 ```
 
-The comment on that first line was in fact the Builtin we were searching for. Given the context, we could only assume the thing called "Intrinsic" was probably the LLVM Intrinsic we were looking for. And turned out, it was! With this we now had a semi-reliable, albeit tedious, method to find the LLVM Intrinsic that corresponds to an Intel Intrinsic.
+The comment on that first line was in fact the Builtin we were searching for. Given the context, we could only assume the thing called "Intrinsic" was probably the LLVM Intrinsic we were looking for. As turns out, it was! With this we now had a semi-reliable, albeit tedious, method to find the LLVM Intrinsic that corresponds to an Intel Intrinsic.
 
 #### The Third Discovery
 
-But now that we have the name to call, how do we actually, well, *use* it in code? We don't really know the paramaters to pass it, only some vague hint from the Intel Intrinsics Guide. Well our first solution was looking back at the intrinsic implementation we found in `immintrin.h`. It turned out that along with the Builtin, there was some code actually calling it. That provided us a vague hint at the very least. We decided that since the LLVM Intrinsics are based off the GCC Builtin's, it made sense if they were called the same. And what did you know, it actually worked! We had code that ran and performed the operations we wanted. Except, as we soon realized, everything was not as it seemed.
+But now that we have the name to call, how do we actually, well, *use* it in code? We don't really know the paramaters to pass it, only some vague hint from the Intel Intrinsics Guide. Well our first idea was to look back at the intrinsic implementation we found in `immintrin.h`. It turns out that along with the Builtin, there is some code actually calling it. That provided us a vague hint at the very least. We decided that since the LLVM Intrinsics are based off the GCC Builtin's, it made sense if they were called the same. And what did you know, it actually worked! We had code that ran and performed the operations we wanted. Except, as we soon realized, everything was not as it seemed.
 
 #### The Fourth Revelation
 
-Turns out, LLVM wants different, and more specific, types for the parameters than GCC did. This was a hard problem to solve, because as of then we hadn't found any part of this actually in LLVM. Well, our saviour came in the form of that second line from above.
+Turns out, LLVM often wants different, and more specific, types for the parameters than GCC does. This was a hard problem to solve, because as of then we hadn't found any part of this actually in LLVM. Well, our saviour came in the form of that second line from above:
 
 ```cpp
 GCCBuiltin<"__builtin_ia32_pmovwb512_mask">,
 ```
 
-The file this came from is called a tablegen file. It's part of how LLVM generates targets, also known as backend. When we looked at the file that line came from, we found this:
+The file this came from is called a tablegen file. It's part of how LLVM generates targets, also known as backend. When we looked at the file the line came from, we found this:
 
 ```cpp
 def int_x86_avx512_mask_pmov_wb_512 :
@@ -106,15 +106,19 @@ def int_x86_avx512_mask_pmov_wb_512 :
                     [IntrNoMem]>;
 ```
 
-This of course was basically complete gibberish to us. All we could gather was that it defined something which looked basically like our intrinsic, and it was somehow connecting that to the GCC Builtin. Well after a long and painful investigation, we eventually found how to read the tablegen entries.
+This of course was basically complete gibberish to us. All we could gather was that it defined something which looked basically like our intrinsic, and it was somehow connecting that to the GCC Builtin. Well after a long and painful investigation we don't have the time to get into, we eventually found out how to read these tablegen entries.
 
-As it turned out, within `Intrinsic<>` the first part in brackets is what the intrinsic returns and the second part in brackets is the *ordered list* of paramaters. That last part was the most important. Now we knew officially the types, and their correct order, which the intrinsic needed.
+As it turns out, within `Intrinsic<>`, the first part in brackets is what the intrinsic returns and the second part in brackets is the *ordered list* of paramaters. That last part was the most important. With that we officially knew the types, and even their correct order, as needed by the intrinsic.
 
 #### The Conclusion
 
-Using everything we found out, we, in true compsci fashion, created a script to do all this hard work for us. Simply provided with an Intel Intrinsic, it will tell us the GCC Builtin, LLVM Intrinsic, source header, `immintrin.h` definition, and even the LLVM usage. Although being completely unrelated to any actual improvements in icgrep or Parabix, this was actually one of the most useful breakthroughs in our opinion. Because of this, we've included a cleaned up and optimized version of our script in appendix <INSERT APENDIX NUMBER HERE!>.
+Using everything we found out, we, in true compsci fashion, created a script to do all this hard work for us. Simply provided with an Intel Intrinsic, it will tell us the GCC Builtin, LLVM Intrinsic, source header, `immintrin.h` definition, and even the LLVM usage. Although being completely unrelated to any actual improvements in icgrep or Parabix, this was actually one of the most useful breakthroughs in our opinion. Because of this, we've included a cleaned up and optimized version of our script in appendix <INSERT APENDIX NUMBER HERE!>. We hope it can perhaps offer as much help, and save as much pain, for others as it has for us.
 
 ### LLVM
+
+With all the talk about how much trouble we had with LLVM related things, you might think we've already covered our troubles with LLVM. I wish that were true, but this is only the beginning. We don't call it HeLLVM for nothing.
+
+
 
 
 # Implementation Details
