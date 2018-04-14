@@ -55,3 +55,16 @@ Popcount is a simple function which just returns the number of 1 bits are set in
 ##### Our Implementation
 
 With popcount being such a standard operation and particularly due to it's importance in cryptography, lots of research has already gone into efficient implementations without specialized hardware support. We found what we believe to be the fastest known algorithm to be documented very well in the [Hamming weight wikipedia page](https://en.wikipedia.org/wiki/Hamming_weight#Efficient_implementation). While the implementation documented in the wikipedia is for performing popcount on scalar 64 bit values, vectorization is trivial as it only uses bitwise logic and shifts.
+
+
+### Future Work
+
+#### simd_pext and simd_pdep
+
+##### Current State
+
+We explored the possibility of improving the performance of pext and pdep using the capabilities of AVX512F and AVX512BW as those are the subfamilies in which we currently have hardware support. Unfortunately we reached the conclusion that we could not make improvements over the default idisa_builder implementation as AVX512BW lacks the capability to address and manipulate individual bits.
+
+##### Future
+
+It remains an open question whether or not future instruction set extensions will unlock new possibilities with pext and pdep. A better implementation might be possible with AVX512VBMI or AVX512VBMI2. It is also possible that better options exist outside of the AVX512 family.
