@@ -155,6 +155,21 @@ We focused on implementing `esimd_bitspread` with AVX-512BW intrinsics to improv
 The purpose of `esimd_bitspread` is to spread each bit from a bitmask into a full-width field.
 Our new implementation uses AVX-512BW broadcast intrinsics to improve performance.
 
+#### Generic SIMD implementation of `esimd_bitspread`
+
+The generic SIMD implementation of `esimd_bitspread` uses `ShuffleVector`s and multiple other vectors and bitcasts.
+These LLVM operations do not always generate efficient IR (especially `ShuffleVector`), so by avoiding them we can significantly improve performance.
+
+```
+Value * IDISA_Builder::esimd_bitspread(unsigned fw, Value * bitmask) {
+    // Code omitted for brevity ...
+    Value * spread_field = CreateBitCast(CreateZExtOrTrunc(bitmask, field_type), VectorType::get(getIntNTy(fw), 1));
+    Value * undefVec = UndefValue::get(VectorType::get(getIntNTy(fw), 1));
+    Value * broadcast = CreateShuffleVector(spread_field, undefVec, Constant::getNullValue(VectorType::get(getInt32Ty(), field_count)));
+    // Code omitted for brevity ...
+}
+```
+
 #### AVX-512BW implementation of `esimd_bitspread`
 
 `bitblock_add_with_carry` always calls `esimd_bitspread` with a field width of 64.
