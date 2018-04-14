@@ -82,7 +82,7 @@ return Intrinsic::x86_avx512_mask_pmov_wb_512;    // "__builtin_ia32_pmovwb512_m
 GCCBuiltin<"__builtin_ia32_pmovwb512_mask">,
 ```
 
-The comment on that first line was in fact the Builtin we were searching for. Given the context, we could only assume the thing called "Intrinsic" was probably the LLVM Intrinsic we were looking for. As turns out, it was! With this we now had a semi-reliable, albeit tedious, method to find the LLVM Intrinsic that corresponds to an Intel Intrinsic.
+The comment on that first line was in fact the Builtin we were searching for. Given the context, we could only assume the thing called "Intrinsic" was probably the LLVM Intrinsic we were looking for. As it turns out, it was! With this we now had a semi-reliable, albeit tedious, method to find the LLVM Intrinsic that corresponds to an Intel Intrinsic.
 
 #### The Third Discovery
 
