@@ -61,21 +61,21 @@ The biggest improvement by far from this change was inheriting the SSE2 implemen
 
 # Challenges
 
-Of course, in a project like this there were bound to be some challenges. But we didn't predict quite this many challenges arising. Right at the beginning there was the obvious challenge of becoming acquainted with the project, but that was just the beginning of our journey.
+Of course, in a project like this there were bound to be some challenges. But we didn't predict quite this many challenges arising. Right at the beginning there was the obvious challenge of becoming acquainted with the codebase, but that was just the beginning of our journey.
 
 ### Intrinsic Locating and Usage
 
-One of the first real issues that arose was a pretty simple one: how do we *use* an intrinsic? We had found a useful intrinsic through the Intel Intrinsics Guide, but we had no clue how to use it in LLVM. The x86 opcode didn't seem to be of much use, and the Intel Intrinsic name was just as meaningless to LLVM. That's when the digging began.
+One of the first real issues that arose was a pretty simple one: how do we *use* an intrinsic? We had found a useful intrinsic through the Intel Intrinsics Guide, but we had no clue how to use it in LLVM. The x86 assembly mnemonic didn't seem to be of much use, and the Intel Intrinsic name was just as meaningless to LLVM. That's when the digging began.
 
 #### The First Breakthrough
 
-So we had previously known that you can use the Intel Intrinsics in your code through adding the header `immintrin.h`. What we didn't know was how the intrinsics were defined in said header. Turns out, they're not defined as assembly black magic as we had previously thought, they're implemented in terms of these weird things called GCC Builtin's. A GCC Builtin is the closest analogue to an LLVM Intrinsic. Basically, it's some arbitrary operation that's defined internally by GCC.
+So we had previously known that you can use the Intel Intrinsics in your code through adding the header `immintrin.h`. What we didn't know was how the intrinsics were defined in said header. Turns out, they're not defined as assembly black magic as we'd previously thought, they're implemented in terms of these weird things called GCC Builtins. A GCC Builtin is more or less the closest analogue to an LLVM Intrinsic. Basically, it's some arbitrary operation that's defined internally by GCC.
 
-Now this may not seem like it was that useful, and initially, it wasn't. But one time, while wallowing in our failure, we got annoyed and just tried searching through the entire icgrep source directory for an intrinsic. We first did it with the opcode, which turned up a mess of scariness we never touched again. But then we tried it again with that GCC Builtin we found. And that's where things started to turn around.
+Now this may not seem like it was that useful, and initially, it wasn't. But one time, while wallowing in our failure, we got annoyed and just tried searching through the entire icgrep source directory for an intrinsic. We first did it with the assembly mnemonic, which turned up a mess of scariness we never touched again. But then we tried it again with that GCC Builtin we'd found. That's where things started to turn around.
 
 #### The Second Finding
 
-By searching through the icgrep directory like that we turned up a number of things, most of them useless. But there were two lines which were of interest to us:
+By searching through the icgrep directory like that we found a number of things, most of them useless. But there were two lines which were of interest to us:
 
 ```cpp
 return Intrinsic::x86_avx512_mask_pmov_wb_512;    // "__builtin_ia32_pmovwb512_mask"
@@ -86,7 +86,7 @@ The comment on that first line was in fact the Builtin we were searching for. Gi
 
 #### The Third Discovery
 
-But now that we have the name to call, how do we actually, well, *use* it in code? We don't really know the paramaters to pass it, only some vague hint from the Intel Intrinsics Guide. Well our first idea was to look back at the intrinsic implementation we found in `immintrin.h`. It turns out that along with the Builtin, there is some code actually calling it. That provided us a vague hint at the very least. We decided that since the LLVM Intrinsics are based off the GCC Builtin's, it made sense if they were called the same. And what did you know, it actually worked! We had code that ran and performed the operations we wanted. Except, as we soon realized, everything was not as it seemed.
+But now that we have the name to call, how do we actually, well, *use* it in code? We don't really know the parameters to pass it, only some vague hint from the Intel Intrinsics Guide. Well our first idea was to look back at the intrinsic implementation we found in `immintrin.h`. It turns out that along with the Builtin, there is some code actually calling it. That provided us a vague hint at the very least. We decided that since the LLVM Intrinsics are based off the GCC Builtins, it made sense if they were called the same. And what did you know, it actually worked! We had code that ran and performed the operations we wanted. Except, as we soon realized, everything was not as it seemed.
 
 #### The Fourth Revelation
 
@@ -96,7 +96,7 @@ Turns out, LLVM often wants different, and more specific, types for the paramete
 GCCBuiltin<"__builtin_ia32_pmovwb512_mask">,
 ```
 
-The file this came from is called a tablegen file. It's part of how LLVM generates targets, also known as backend. When we looked at the file the line came from, we found this:
+The file this came from is called a tablegen file. It's part of how LLVM generates targets, basically a backend it's compiling for. When we looked at the file the line came from, we found this:
 
 ```cpp
 def int_x86_avx512_mask_pmov_wb_512 :
@@ -108,7 +108,7 @@ def int_x86_avx512_mask_pmov_wb_512 :
 
 This of course was basically complete gibberish to us. All we could gather was that it defined something which looked basically like our intrinsic, and it was somehow connecting that to the GCC Builtin. Well after a long and painful investigation we don't have the time to get into, we eventually found out how to read these tablegen entries.
 
-As it turns out, within `Intrinsic<>`, the first part in brackets is what the intrinsic returns and the second part in brackets is the *ordered list* of paramaters. That last part was the most important. With that we officially knew the types, and even their correct order, as needed by the intrinsic.
+As it turns out, within `Intrinsic<>`, the first part in brackets is what the intrinsic returns and the second part in brackets is the *ordered list* of parameters. That last part was the most important. With that we officially knew the types, and even the correct order of them, needed by the intrinsic.
 
 #### The Conclusion
 
