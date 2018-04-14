@@ -209,6 +209,125 @@ llvm::Value * IDISA_AVX512BW_Builder::esimd_bitspread(unsigned fw, Value * bitma
 
 # Implementation Evaluation
 
+### Performance
+
+#### Test environment
+
+All tests were performed on the CSIL AVX-512 server `cs-osl-08`.
+
+Every test was run 10 times in succession, and the best result (shortest execution time) was taken.
+
+#### Test details
+
+We tested with a complex regular expression on a large input file in order to best represent the use case of icgrep.
+
+Regex: `[A-Z]((([a-zA-Z]*a[a-zA-Z]*[ ])*[a-zA-Z]*e[a-zA-Z]*[ ])*[a-zA-Z]*s[a-zA-Z]*[ ])*[.?!]`
+
+Input file: `/home/cameron/Wikimedia/dewiki-20150125-pages-articles.xml` (14 GB Unicode text)
+
+We measured performance with the command `perf stat icgrep -c -r $regex $input -BlockSize=$size`, where `$regex` is the regex, `$input` is the input file, and `$size` is the block size.
+
+#### Test results
+
+"Original" icgrep refers to icgrep rev. 5968 without our changes.
+
+"Modified" icgrep refers to icgrep rev. 5968 merged with our changes.
+
+##### Original vs. modified with BlockSize=256
+
+To establish a baseline, we first tested with a block size of 256.
+This test excludes our performance improvements, so we expected performance to be roughly the same.
+
+```
+Original:
+
+      18932.729419      task-clock (msec)         #    0.994 CPUs utilized
+             3,530      context-switches          #    0.186 K/sec
+                 2      cpu-migrations            #    0.000 K/sec
+           288,333      page-faults               #    0.015 M/sec
+    47,192,334,013      cycles                    #    2.493 GHz
+   <not supported>      stalled-cycles-frontend
+   <not supported>      stalled-cycles-backend
+    92,805,993,775      instructions              #    1.97  insns per cycle
+     2,591,933,399      branches                  #  136.902 M/sec
+        82,445,498      branch-misses             #    3.18% of all branches
+
+      19.039420752 seconds time elapsed
+
+Modified:
+
+      18891.225704      task-clock (msec)         #    0.994 CPUs utilized
+             3,111      context-switches          #    0.165 K/sec
+                 1      cpu-migrations            #    0.000 K/sec
+           293,365      page-faults               #    0.016 M/sec
+    47,126,066,272      cycles                    #    2.495 GHz
+   <not supported>      stalled-cycles-frontend
+   <not supported>      stalled-cycles-backend
+    92,796,969,146      instructions              #    1.97  insns per cycle
+     2,586,662,681      branches                  #  136.924 M/sec
+        83,078,587      branch-misses             #    3.21% of all branches
+
+      19.003514972 seconds time elapsed
+```
+
+As we expected, performance was nearly identical across all metrics.
+Elapsed time was only different by 30ms (~1%), which can be accounted for by test variance.
+
+##### Original vs. modified with BlockSize=512
+
+To determine the extent of our performance improvements, we tested with a block size of 512.
+We expected the modified icgrep to be significantly faster than the original.
+
+```
+Original:
+
+      17541.104082      task-clock (msec)         #    0.989 CPUs utilized
+             6,739      context-switches          #    0.384 K/sec
+                12      cpu-migrations            #    0.001 K/sec
+           320,005      page-faults               #    0.018 M/sec
+    43,531,265,728      cycles                    #    2.482 GHz
+   <not supported>      stalled-cycles-frontend
+   <not supported>      stalled-cycles-backend
+    64,057,204,343      instructions              #    1.47  insns per cycle
+     2,176,657,041      branches                  #  124.089 M/sec
+        50,176,285      branch-misses             #    2.31% of all branches
+
+      17.737673631 seconds time elapsed
+
+Modified:
+
+      14829.318856      task-clock (msec)         #    0.954 CPUs utilized
+            20,592      context-switches          #    0.001 M/sec
+                11      cpu-migrations            #    0.001 K/sec
+           320,383      page-faults               #    0.022 M/sec
+    36,465,102,857      cycles                    #    2.459 GHz
+   <not supported>      stalled-cycles-frontend
+   <not supported>      stalled-cycles-backend
+    57,415,596,361      instructions              #    1.57  insns per cycle
+     2,222,518,780      branches                  #  149.873 M/sec
+        49,266,758      branch-misses             #    2.22% of all branches
+
+      15.541295089 seconds time elapsed
+```
+
+As we expected, our modified code was 2.2s (12.4%) faster when using a block size of 512.
+
+Our modified icgrep used 7 million (16%) fewer cycles and 7 million (10%) fewer instructions.
+The number of instructions per cycle increased by 0.1 (7%), and throughput increased by 25 MB/s (21%).
+
+Our modified icgrep also caused significantly more context switches, but this did not appear to impact performance.
+
+#### Conclusion
+
+The performance of icgrep is significantly improved on CPUs that support AVX-512BW.
+
+The increased blocksize and optimized hardware of CPUs with AVX-512BW offer significant performance improvements for parallelized applications such as icgrep.
+
+With icgrep unchanged, `BlockSize=512` tested as 6.8% faster than `BlockSize=256`.
+
+In addition to these base advantages, our changes to icgrep leverage new AVX-512BW intrinsics to further increase throughput and reduce run time.
+
+With our changes, `BlockSize=512` tested as 18.4% faster than `BlockSize=256`.
 
 # Conclusion
 
