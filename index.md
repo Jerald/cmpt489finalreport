@@ -24,7 +24,13 @@ Once things actually started progressing, we set ourselves a number of goals. So
  * `simd_pext`
  * `simd_pdep`
 
-Though we also kept our eyes out for any other operations we found along the way which could be improved.
+Though we were sure to keep our eyes out for any other operations we found along the way which could be improved.
+
+### Our Tools Of The Trade
+
+In a project such as ours, one based around improving the execution of algorithms using newly available tools, we had two directions to head. The first was to rework and reengineer the existing algorithms in ways that facilitated and utilized the new AVX-512 features. The second was to analyze the existing processes and look for cases where they can be improved by direct application of new AVX-512 tools. The latter, honestly far easier path, was the one we chose.
+
+This meant that the primary means by which we were looking to improve things was through discovering new and interesting LLVM Intrinsics which could be applied in unique ways. This of course was heavily facilitated by the existence of the Intel Intrinsics Guide, albeit it was not quite as useful as we originally would've hoped. Through our adventures, we found LLVM and its Intrinsics were a whole different beast than the Intel ones we had information on. But that's a story for another section; in due time all will be revealed.
 
 
 # General Work
@@ -48,17 +54,19 @@ At the beginning, just after AVX-512 support was added, our builder was inheriti
 
 From there, we went and found every function overridden in a previous builder, other than the base IDISA builder, and overrode it in our builder. We were then able to precisely specify which version of a given operation we wanted to be using.
 
-
 #### How this helped
 
 The biggest improvement by far from this change was inheriting the SSE2 implementation of `bitblock_advance`. This version has been optimized quite well, and offered a nearly 30% runtime improvement for large files.
 
 
-
-
 # Challenges
 
+Of course, in a project like this there were bound to be some challenges. But we didn't predict quite this many challenges arising. Right at the beginning there was the obvious challenge of becoming acquainted with the project, but that was just the beginning of our journey.
+
 ### Intrinsic Discovery
+
+One of the first real issues that arose was a pretty simple one: how do we *use* an intrinsic? We had found a useful intrinsic through the Intel Intrinsics Guide, but we had no clue how to use it in LLVM. The x86 opcode didn't seem to be of much use, and the Intel Intrinsic name was just as meaningless to LLVM.
+
 
 ### LLVM
 
