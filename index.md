@@ -129,18 +129,13 @@ With all the talk about how much trouble we had with LLVM related things, you mi
 
 ### `bitblock_add_with_carry`
 
-#### Overview of `bitblock_add_with_carry`
+The purpose of `bitblock_add_with_carry` is long-stream addition (with carries) of 64-bit values. This form of addition is not natively supported by AVX2 or AVX-512BW intrinsics, so an efficient implementation is important. Our changes provide performance improvements without altering the existing algorithm.
 
-The purpose of the `bitblock_add_with_carry` function is long-stream addition (with carries) of 64-bit values.
-This form of addition is not natively supported by AVX2 or AVX-512BW intrinsics, so an efficient implementation is important.
-Our changes provide performance improvements without altering the existing algorithm.
+#### AVX2 Implementation
 
-#### AVX2 implementation of `bitblock_add_with_carry`
+The AVX2 implementation of `bitblock_add_with_carry` uses many simple SIMD operations, which we found to be well-optimized by the LLVM backend. It also calls the `esimd_bitspread` function, which is implemented with generic SIMD operations.
 
-The AVX2 implementation of `bitblock_add_with_carry` uses many simple SIMD operations, which we found to be well-optimized by the LLVM backend.
-`bitblock_add_with_carry` also calls the `esimd_bitspread` function, which is implemented with generic SIMD operations.
-
-```
+```cpp
 std::pair<Value *, Value *> IDISA_AVX2_Builder::bitblock_add_with_carry(Value * e1, Value * e2, Value * carryin) {
     // Code omitted for brevity ...
     Value * increments = esimd_bitspread(64,incrementMask);
@@ -148,19 +143,17 @@ std::pair<Value *, Value *> IDISA_AVX2_Builder::bitblock_add_with_carry(Value * 
 }
 ```
 
-We focused on implementing `esimd_bitspread` with AVX-512BW intrinsics to improve performance.
+We focused on implementing `esimd_bitspread` with AVX-512F intrinsics to improve performance.
 
 #### Overview of `esimd_bitspread`
 
-The purpose of `esimd_bitspread` is to spread each bit from a bitmask into a full-width field.
-Our new implementation uses AVX-512BW broadcast intrinsics to improve performance.
+The purpose of this operation is to spread each bit from a bitmask into a full-width field. Our new implementation uses AVX-512F broadcast intrinsics to improve performance.
 
-#### Generic SIMD implementation of `esimd_bitspread`
+#### Generic SIMD Implementation of `esimd_bitspread`
 
-The generic SIMD implementation of `esimd_bitspread` uses `ShuffleVector`s and multiple other vectors and bitcasts.
-These LLVM operations do not always generate efficient IR (especially `ShuffleVector`), so by avoiding them we can significantly improve performance.
+The generic SIMD implementation of `esimd_bitspread` uses `ShuffleVector` operations and multiple other vectors and bitcasts. These LLVM operations do not always generate efficient IR (especially `ShuffleVector`), so by avoiding them we can significantly improve performance.
 
-```
+```cpp
 Value * IDISA_Builder::esimd_bitspread(unsigned fw, Value * bitmask) {
     // Code omitted for brevity ...
     Value * spread_field = CreateBitCast(CreateZExtOrTrunc(bitmask, field_type), VectorType::get(getIntNTy(fw), 1));
@@ -170,17 +163,13 @@ Value * IDISA_Builder::esimd_bitspread(unsigned fw, Value * bitmask) {
 }
 ```
 
-#### AVX-512BW implementation of `esimd_bitspread`
+#### AVX-512F Implementation of `esimd_bitspread`
 
-`bitblock_add_with_carry` always calls `esimd_bitspread` with a field width of 64.
-If the field width is not 64, we fall back to the generic SIMD implementation of `esimd_bitspread`.
+`bitblock_add_with_carry` always calls `esimd_bitspread` with a field width of 64. If the field width is not 64, we fall back to the generic SIMD implementation of `esimd_bitspread`.
 
-Our implementation broadcasts `i64`s to the destination vector using the given 8-bit mask.
-For every one bit in the mask, an `i64` 1 will be copied from the `a` vector.
-For every zero bit in the mask, an `i64` 0 will be copied from the fallback `src` vector.
-The resulting `<8 x i64>` will contain 8 `i64`s corresponding to the 8 bits in the mask.
+Our implementation broadcasts `i64` values to the destination vector using the given 8-bit mask. For every one bit in the mask, an `i64` 1 will be copied from the `a` vector. For every zero bit in the mask, an `i64` 0 will be copied from the fallback `src` vector. The resulting `<8 x i64>` will contain 8 `i64` values corresponding to the 8 bits in the mask.
 
-```
+```cpp
 llvm::Value * IDISA_AVX512BW_Builder::esimd_bitspread(unsigned fw, Value * bitmask) {
     if (mBitBlockWidth == 512 && fw == 64) {
         Value * broadcastFunc = Intrinsic::getDeclaration(getModule(), Intrinsic::x86_avx512_mask_broadcasti64x4_512);
@@ -209,36 +198,39 @@ llvm::Value * IDISA_AVX512BW_Builder::esimd_bitspread(unsigned fw, Value * bitma
 
 # Implementation Evaluation
 
-### Performance
+As the overarching goal of the project is to improve performance, the best way we found to evaluate our code is by benchmarking the runtime of icgrep. To this end, we've carried out a number of tests to see the benefits gained by our work.
 
-#### Test environment
+### Methodology
 
 All tests were performed on the CSIL AVX-512 server `cs-osl-08`.
 
 Every test was run 10 times in succession, and the best result (shortest execution time) was taken.
 
-#### Test details
+### Test details
 
-We tested with a complex regular expression on a large input file in order to best represent the use case of icgrep.
+We tested with a complex regular expression on a large input file in order to best represent the normal use case of icgrep.
 
-Regex: `[A-Z]((([a-zA-Z]*a[a-zA-Z]*[ ])*[a-zA-Z]*e[a-zA-Z]*[ ])*[a-zA-Z]*s[a-zA-Z]*[ ])*[.?!]`
+```cpp
+Regex: [A-Z]((([a-zA-Z]*a[a-zA-Z]*[ ])*[a-zA-Z]*e[a-zA-Z]*[ ])*[a-zA-Z]*s[a-zA-Z]*[ ])*[.?!]
+```
 
-Input file: `/home/cameron/Wikimedia/dewiki-20150125-pages-articles.xml` (14 GB Unicode text)
+```cpp
+Input file: /home/cameron/Wikimedia/dewiki-20150125-pages-articles.xml (14 GB Unicode text)
+```
 
 We measured performance with the command `perf stat icgrep -c -r $regex $input -BlockSize=$size`, where `$regex` is the regex, `$input` is the input file, and `$size` is the block size.
 
-#### Test results
+### Test results
 
 "Original" icgrep refers to icgrep rev. 5968 without our changes.
 
 "Modified" icgrep refers to icgrep rev. 5968 merged with our changes.
 
-##### Original vs. modified with BlockSize=256
+#### Original vs. modified with BlockSize=256
 
-To establish a baseline, we first tested with a block size of 256.
-This test excludes our performance improvements, so we expected performance to be roughly the same.
+To establish a baseline, we first tested with a block size of 256. This test excludes our performance improvements, so we expected performance to be roughly the same.
 
-```
+```cpp
 Original:
 
       18932.729419      task-clock (msec)         #    0.994 CPUs utilized
@@ -270,15 +262,14 @@ Modified:
       19.003514972 seconds time elapsed
 ```
 
-As we expected, performance was nearly identical across all metrics.
-Elapsed time was only different by 30ms (~1%), which can be accounted for by test variance.
+As we expected, performance was nearly identical across all metrics. Elapsed time was only different by 30ms (~1%), which can be accounted for by test variance.
 
-##### Original vs. modified with BlockSize=512
+#### Original vs. modified with BlockSize=512
 
 To determine the extent of our performance improvements, we tested with a block size of 512.
 We expected the modified icgrep to be significantly faster than the original.
 
-```
+```cpp
 Original:
 
       17541.104082      task-clock (msec)         #    0.989 CPUs utilized
@@ -317,15 +308,15 @@ The number of instructions per cycle increased by 0.1 (7%), and throughput incre
 
 Our modified icgrep also caused significantly more context switches, but this did not appear to impact performance.
 
-#### Conclusion
+### Conclusion
 
-The performance of icgrep is significantly improved on CPUs that support AVX-512BW.
+The performance of icgrep is significantly improved on CPUs that support AVX-512.
 
 The increased blocksize and optimized hardware of CPUs with AVX-512BW offer significant performance improvements for parallelized applications such as icgrep.
 
 With icgrep unchanged, `BlockSize=512` tested as 6.8% faster than `BlockSize=256`.
 
-In addition to these base advantages, our changes to icgrep leverage new AVX-512BW intrinsics to further increase throughput and reduce run time.
+In addition to these base advantages, our changes to icgrep leverage new AVX-512 intrinsics to further increase throughput and reduce run time.
 
 With our changes, `BlockSize=512` tested as 18.4% faster than `BlockSize=256`.
 
