@@ -127,8 +127,70 @@ With all the talk about how much trouble we had with LLVM related things, you mi
 
 ### esimd_popcount
 
-### esimd_bitspread
+### `bitblock_add_with_carry`
 
+#### Overview of `bitblock_add_with_carry`
+
+The purpose of the `bitblock_add_with_carry` function is long-stream addition (with carries) of 64-bit values.
+This form of addition is not natively supported by AVX2 or AVX-512BW intrinsics, so an efficient implementation is important.
+Our changes provide performance improvements without altering the existing algorithm.
+
+#### AVX2 implementation of `bitblock_add_with_carry`
+
+The AVX2 implementation of `bitblock_add_with_carry` uses many simple SIMD operations, which we found to be well-optimized by the LLVM backend.
+`bitblock_add_with_carry` also calls the `esimd_bitspread` function, which is implemented with generic SIMD operations.
+
+```
+std::pair<Value *, Value *> IDISA_AVX2_Builder::bitblock_add_with_carry(Value * e1, Value * e2, Value * carryin) {
+	// Code omitted for brevity ...
+    Value * increments = esimd_bitspread(64,incrementMask);
+	// Code omitted for brevity ...
+}
+```
+
+We focused on implementing `esimd_bitspread` with AVX-512BW intrinsics to improve performance.
+
+#### Overview of `esimd_bitspread`
+
+The purpose of `esimd_bitspread` is to spread each bit from a bitmask into a full-width field.
+Our new implementation uses AVX-512BW broadcast intrinsics to improve performance.
+
+#### AVX-512BW implementation of `esimd_bitspread`
+
+`bitblock_add_with_carry` always calls `esimd_bitspread` with a field width of 64.
+If the field width is not 64, we fall back to the generic SIMD implementation of `esimd_bitspread`.
+
+Our implementation broadcasts `i64`s to the destination vector using the given 8-bit mask.
+For every one bit in the mask, an `i64` 1 will be copied from the `a` vector.
+For every zero bit in the mask, an `i64` 0 will be copied from the fallback `src` vector.
+The resulting `<8 x i64>` will contain 8 `i64`s corresponding to the 8 bits in the mask.
+
+```
+llvm::Value * IDISA_AVX512BW_Builder::esimd_bitspread(unsigned fw, Value * bitmask) {
+    if (mBitBlockWidth == 512 && fw == 64) {
+        Value * broadcastFunc = Intrinsic::getDeclaration(getModule(), Intrinsic::x86_avx512_mask_broadcasti64x4_512);
+
+        const unsigned int srcFieldCount = 8;
+        Constant * srcArr[srcFieldCount];
+        for (unsigned int i = 0; i < srcFieldCount; i++) {
+            srcArr[i] = getInt64(0);
+        }
+        Constant * src = ConstantVector::get({srcArr, srcFieldCount});
+
+        const unsigned int aFieldCount = 4;
+        Constant * aArr[aFieldCount];
+        for (unsigned int i = 0; i < aFieldCount; i++) {
+            aArr[i] = getInt64(1);
+        }
+        Constant * a = ConstantVector::get({aArr, aFieldCount});
+
+        Value * broadcastMask = CreateZExtOrTrunc(bitmask, getInt8Ty());
+
+        return CreateCall(broadcastFunc, {a, src, bitmask});
+    }
+    return IDISA_Builder::esimd_bitspread(fw, bitmask);
+}
+```
 
 # Implementation Evaluation
 
