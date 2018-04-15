@@ -437,9 +437,19 @@ It remains an open question whether or not future instruction set extensions wil
 
 #### Shuffle Vectors
 
+Coming with AVX-512 are a number of new permutation operations. These provide the ability to convert a number of specific shuffle vector operations into exact intrinsics. The specific family are the `permutex2var` set. There are a number of different Intel Intrinsics matching this for a number of different field widths. These can be used to permute from two inputs, similar to how the LLVM IR `shufflevector` instruction works.
+
+Implementing some sort of override for using these has the possibility to improve a number of different operations in specific cases. 
+
 ---
 
 #### Arbitrary Bit Shift
+
+One of the limitations in AVX-512 is the lack of bit-specific or bit-granular operations. This can make a lot of attempts at optimization difficult because IDISA makes use of many bit-level operation. Utilizing multiple new AVX-512 instructions has the possibility to allow for arbitrary shifting at a bit-specific level.
+
+The proposed method we have uses some of the new bit rotate operations, such as `_mm512_rol_epi64`, which rotate the bits in a field such that shifting off one edge has them come around to the other. That can then be used with the 8-bit align operations from `_mm512_alignr_epi8`, which combine 128-bit lanes from two input vectors into a 256-bit temporary value, shifts the value by a supplied number of bytes, and then stores the lower 128-bits into the destination.
+
+These two operations combined have the ability to allow selecting and shifting of an arbitrary bit amount. Unfortunately, because the align operations work on 128-bit lanes or larger, and the rotates only work on 64-bit quads or smaller, you can only effectively work on every second quad. This means that for a 512-bit vector register, you can only process an effective 256-bits of data.
 
 ---
 
