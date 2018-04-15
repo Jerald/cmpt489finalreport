@@ -42,11 +42,7 @@ Most of these "other" things we worked on were about improving the design or arc
 
 ### Dynamic Feature Detection
 
-Probably the largest of these changes is what we're calling dynamic feature detection. The idea behind this change is to move some of the CPU feature detection responsibilities out of `idisa_target.cpp` and instead check available features as needed from within our IR builder class.
-
-This allows us to greatly simplify the inheritance hierarchy for the AVX-512 builder while providing better coverage for future CPUs.
-
-With dynamic feature detection we are able to select the best implementation available for every IDISA function on any given CPU.
+Probably the largest of these changes is what we're calling dynamic feature detection. The idea behind this change is to move some of the CPU feature detection responsibilities out of `idisa_target.cpp` and instead check available features as needed from within our IR builder class. This allows us to greatly simplify the inheritance hierarchy for the AVX-512 builder while providing better coverage for future CPUs. With dynamic feature detection we are able to select the best implementation available for every IDISA function on any given CPU.
 
 For example, if run with a hypothetical CPU which supports AVX512VPOPCNTDQ but does not include AVX512BW, we would be unable to use our improved `hsimd_packh` and `hsimd_packl` functions with a field width of 16 as the given CPU does not support the necessary operations. In this case the `IDISA_AVX512F_Builder` class would fall back to the base `IDISA_Builder` implementations of `hsimd_packh` and `hsimd_packl`. With dynamic feature detection this setback remains isolated to only the functions which require the missing AVX512BW. In this example the IR builder would still be able to take full advantage of the AVX512VPOPCNTDQ capabilities in it's implementation of `simd_popcount`.
 
