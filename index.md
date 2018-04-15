@@ -233,36 +233,36 @@ To establish a baseline, we first tested with a block size of 256. This test exc
 ```cpp
 Original:
 
-      18932.729419      task-clock (msec)         #    0.994 CPUs utilized
-             3,530      context-switches          #    0.186 K/sec
-                 2      cpu-migrations            #    0.000 K/sec
-           288,333      page-faults               #    0.015 M/sec
-    47,192,334,013      cycles                    #    2.493 GHz
+      19173.678393      task-clock (msec)         #    0.993 CPUs utilized
+             3,751      context-switches          #    0.196 K/sec
+                 4      cpu-migrations            #    0.000 K/sec
+           348,629      page-faults               #    0.018 M/sec
+    47,768,061,667      cycles                    #    2.491 GHz
    <not supported>      stalled-cycles-frontend
    <not supported>      stalled-cycles-backend
-    92,805,993,775      instructions              #    1.97  insns per cycle
-     2,591,933,399      branches                  #  136.902 M/sec
-        82,445,498      branch-misses             #    3.18% of all branches
+    94,164,738,864      instructions              #    1.97  insns per cycle
+     2,809,844,564      branches                  #  146.547 M/sec
+        83,988,313      branch-misses             #    2.99% of all branches
 
-      19.039420752 seconds time elapsed
+      19.302744652 seconds time elapsed
 
 Modified:
 
-      18891.225704      task-clock (msec)         #    0.994 CPUs utilized
-             3,111      context-switches          #    0.165 K/sec
-                 1      cpu-migrations            #    0.000 K/sec
-           293,365      page-faults               #    0.016 M/sec
-    47,126,066,272      cycles                    #    2.495 GHz
+      19303.098007      task-clock (msec)         #    0.994 CPUs utilized
+             2,881      context-switches          #    0.149 K/sec
+                11      cpu-migrations            #    0.001 K/sec
+           348,036      page-faults               #    0.018 M/sec
+    48,031,626,212      cycles                    #    2.488 GHz
    <not supported>      stalled-cycles-frontend
    <not supported>      stalled-cycles-backend
-    92,796,969,146      instructions              #    1.97  insns per cycle
-     2,586,662,681      branches                  #  136.924 M/sec
-        83,078,587      branch-misses             #    3.21% of all branches
+    94,403,894,196      instructions              #    1.97  insns per cycle
+     2,854,466,925      branches                  #  147.876 M/sec
+        83,950,582      branch-misses             #    2.94% of all branches
 
-      19.003514972 seconds time elapsed
+      19.416177422 seconds time elapsed
 ```
 
-As we expected, performance was nearly identical across all metrics. Elapsed time was only different by 30ms (~1%), which can be accounted for by test variance.
+As we expected, performance was nearly identical across all metrics. Elapsed time was only different by 100ms (~0.6%), which can be accounted for by test variance.
 
 #### Original vs. modified with BlockSize=512
 
@@ -272,39 +272,39 @@ We expected the modified icgrep to be significantly faster than the original.
 ```cpp
 Original:
 
-      17541.104082      task-clock (msec)         #    0.989 CPUs utilized
-             6,739      context-switches          #    0.384 K/sec
-                12      cpu-migrations            #    0.001 K/sec
-           320,005      page-faults               #    0.018 M/sec
-    43,531,265,728      cycles                    #    2.482 GHz
+      20962.526286      task-clock (msec)         #    0.998 CPUs utilized
+               866      context-switches          #    0.041 K/sec
+                 4      cpu-migrations            #    0.000 K/sec
+           282,026      page-faults               #    0.013 M/sec
+    52,399,033,725      cycles                    #    2.500 GHz
    <not supported>      stalled-cycles-frontend
    <not supported>      stalled-cycles-backend
-    64,057,204,343      instructions              #    1.47  insns per cycle
-     2,176,657,041      branches                  #  124.089 M/sec
-        50,176,285      branch-misses             #    2.31% of all branches
+    76,707,180,495      instructions              #    1.46  insns per cycle
+     2,426,347,899      branches                  #  115.747 M/sec
+        50,667,782      branch-misses             #    2.09% of all branches
 
-      17.737673631 seconds time elapsed
+      20.999098691 seconds time elapsed
 
 Modified:
 
-      14829.318856      task-clock (msec)         #    0.954 CPUs utilized
-            20,592      context-switches          #    0.001 M/sec
-                11      cpu-migrations            #    0.001 K/sec
-           320,383      page-faults               #    0.022 M/sec
-    36,465,102,857      cycles                    #    2.459 GHz
+      15290.962991      task-clock (msec)         #    0.948 CPUs utilized
+            26,033      context-switches          #    0.002 M/sec
+                17      cpu-migrations            #    0.001 K/sec
+           346,907      page-faults               #    0.023 M/sec
+    37,395,579,783      cycles                    #    2.446 GHz
    <not supported>      stalled-cycles-frontend
    <not supported>      stalled-cycles-backend
-    57,415,596,361      instructions              #    1.57  insns per cycle
-     2,222,518,780      branches                  #  149.873 M/sec
-        49,266,758      branch-misses             #    2.22% of all branches
+    58,805,734,674      instructions              #    1.57  insns per cycle
+     2,447,342,368      branches                  #  160.052 M/sec
+        50,533,018      branch-misses             #    2.06% of all branches
 
-      15.541295089 seconds time elapsed
+      16.129089854 seconds time elapsed
 ```
 
-As we expected, our modified code was 2.2s (12.4%) faster when using a block size of 512.
+As we expected, our modified code was 4.9 seconds (23.2%) faster when using a block size of 512.
 
-Our modified icgrep used 7 million (16%) fewer cycles and 7 million (10%) fewer instructions.
-The number of instructions per cycle increased by 0.1 (7%), and throughput increased by 25 MB/s (21%).
+Our modified icgrep used 15 million (28.6%) fewer cycles and 18 million (23.3%) fewer instructions.
+The number of instructions per cycle increased by 0.11 (7.5%), and throughput increased by 44 MB/s (38.3%).
 
 Our modified icgrep also caused significantly more context switches, but this did not appear to impact performance.
 
@@ -312,13 +312,13 @@ Our modified icgrep also caused significantly more context switches, but this di
 
 The performance of icgrep is significantly improved on CPUs that support AVX-512.
 
-The increased blocksize and optimized hardware of CPUs with AVX-512BW offer significant performance improvements for parallelized applications such as icgrep.
+The increased blocksize and optimized hardware of CPUs with AVX-512 offer significant performance improvements for parallelized applications such as icgrep.
 
-With icgrep unchanged, `BlockSize=512` tested as 6.8% faster than `BlockSize=256`.
+With icgrep unchanged, `BlockSize=512` tested as 8.8% slower than `BlockSize=256`.
 
 In addition to these base advantages, our changes to icgrep leverage new AVX-512 intrinsics to further increase throughput and reduce run time.
 
-With our changes, `BlockSize=512` tested as 18.4% faster than `BlockSize=256`.
+With our changes, `BlockSize=512` tested as 16.9% faster than `BlockSize=256`.
 
 # Conclusion
 
