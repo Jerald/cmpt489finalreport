@@ -12,8 +12,6 @@ At that point in time icgrep had no specific support for AVX-512. And in fact, m
 
 We quickly realized that "improving performance" is no simple task. Icgrep, and not to mention LLVM, is an incredibly complex and interconnected piece of technology. Simply finding where to begin was a challenge for us at the start. But eventually, we did become aquainted with everything and started to make some headway.
 
----
-
 ### The Real Goals
 
 Once things actually started progressing, we set ourselves a number of goals. Some we completed, some became but a pipe dream. But more or less, our goals were to find interesting and efficient implementations for the following operations:
@@ -27,8 +25,6 @@ Once things actually started progressing, we set ourselves a number of goals. So
  * `simd_pdep`
 
 Though we were sure to keep our eyes out for any other operations we found along the way which could be improved.
-
----
 
 ### Our Tools Of The Trade
 
