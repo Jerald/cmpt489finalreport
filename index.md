@@ -382,7 +382,7 @@ The number of instructions per cycle increased by 0.11 (7.5%), and throughput in
 
 Our modified icgrep also caused significantly more context switches, but this did not appear to impact performance.
 
-### Conclusion
+### Final Outcome
 
 The performance of icgrep is significantly improved on CPUs that support AVX-512.
 
@@ -394,8 +394,29 @@ With icgrep unchanged, `BlockSize=512` tested as 8.8% slower than `BlockSize=256
 
 With our changes, `BlockSize=512` tested as 16.9% faster than `BlockSize=256`.
 
+---
+
 # Conclusion
+
+Well, it's been a long, difficult, and interesting road for us. But in the end, we think everything went pretty well. We made considerable improvements to the performance of icgrep on machines with AVX-512, we discovered a number of traps in LLVM which can hopefully be avoided in the future, and we created a new tool for finding intrinsic information. We hope that the work we did helps future icgrep developers on their journey.
+
 
 ### Lessons Learned
 
+
+
+---
+
 ### Future Work
+
+#### `simd_pext` and `simd_pdep`
+
+We explored the possibility of improving the performance of `pext` and `pdep` using the capabilities of AVX512F and AVX512BW as those are the subfamilies which we currently have hardware support for. Unfortunately, we reached the conclusion that we could not make improvements over the default `IDISA_Builder` implementation as AVX512F and AVX512BW lack the capability to address and manipulate individual bits.
+
+It remains an open question whether or not future instruction set extensions will unlock new possibilities with pext and pdep. A better implementation might be possible with AVX512VBMI or AVX512VBMI2. It is also possible that better options exist outside of the AVX512 family.
+
+#### Shuffle Vectors
+
+
+
+#### Arbitrary Bit Shift
