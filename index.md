@@ -222,7 +222,7 @@ We measured performance with the command `perf stat icgrep -c -r $regex $input -
 
 ### Test results
 
-"Original" icgrep refers to icgrep rev. 5968 without our changes.
+"Original" icgrep refers to icgrep rev. 5968 without our changes (`packh` and `packl` reverted).
 
 "Modified" icgrep refers to icgrep rev. 5968 merged with our changes.
 
