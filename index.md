@@ -405,20 +405,19 @@ Well, it's been a long, difficult, and interesting road for us. But in the end, 
 
 Throughout this project we had our ups, our downs, and our side-ways. We learned far more about far weirder things than we would've ever immagined. It's hard for us to come up with a comprehensive list, so here are a few of the ones we thought were most important.
 
-
-#### The Basics
+##### The Basics
 
 When we started this course we had zero experience with any relevant software or development techniques. We were only vaguely familiar with SIMD technology from having it off-handedly mentioned when we took CMPT 295. A lot of what we did was simply experimenting with and discovering new things about, LLVM and the Parabix framework. Through this process, we actually became reasonably competant with developing for icgrep and LLVM.
 
-#### For problem solving:
+##### For problem solving:
 
 You don't necessarily need to find vector-specific solutions to problems. In some cases, as with popcount, you can find a scalar solution which can be applied easily to vectorized cases.
 
-#### If a solution isn't working:
+##### If a solution isn't working:
 
 Sometimes a solution which uses less IR and, should at least, use less assembly can still be worse than an existing solution. This was something that came up a few times, notably with `bitblock_advance` and also somewhat in the case of our unselectable intrinsic.
 
-#### And most importantly:
+##### And most importantly:
  
 When we started, we were worried we weren't experienced enough for this course. With us being only second year's, we were worried we wouldn't have the skills to do well. But in the end, the lesson we took from this experience is that if you're offered the opportunity to push the boundries of what you can do, maybe give it a thought.
 
