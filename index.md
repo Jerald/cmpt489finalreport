@@ -418,7 +418,7 @@ You don't necessarily need to find vector-specific solutions to problems. In som
 Sometimes a solution which uses less IR and, should at least, use less assembly can still be worse than an existing solution. This was something that came up a few times, notably with `bitblock_advance` and also somewhat in the case of our unselectable intrinsic.
 
 ##### And most importantly:
- 
+
 When we started, we were worried we weren't experienced enough for this course. With us being only second year's, we were worried we wouldn't have the skills to do well. But in the end, the lesson we took from this experience is that if you're offered the opportunity to push the boundries of what you can do, maybe give it a thought.
 
 ---
@@ -437,7 +437,7 @@ It remains an open question whether or not future instruction set extensions wil
 
 Coming with AVX-512 are a number of new permutation operations. These provide the ability to convert a number of specific shuffle vector operations into exact intrinsics. The specific family are the `permutex2var` set. There are a number of different Intel Intrinsics matching this for a number of different field widths. These can be used to permute from two inputs, similar to how the LLVM IR `shufflevector` instruction works.
 
-Implementing some sort of override for using these has the possibility to improve a number of different operations in specific cases. 
+Implementing some sort of override for using these has the possibility to improve a number of different operations in specific cases.
 
 ##### Arbitrary Bit Shift
 
@@ -449,4 +449,4 @@ These two operations combined have the ability to allow selecting and shifting o
 
 ##### u8u16
 
-In it's current state, `u8u16` is not working correctly when run with a blocksize of 512. Currently `u8u16` will give the correct output on the first 512 bits of input it ingests. The output corresponding to the next 512 bits of input gets zeroed out. The remainder of the output stream alternates between blocks of correct output, blocks of zeroes, and on rare occasions blocks of 0xbebe. We have not found a consistent pattern for the order and frequency of these alternations.
+In it's current state, `u8u16` is not working correctly when run with a blocksize of 512. Currently `u8u16` will give the correct output on the first 512 bits of input it ingests. The output corresponding to the next 512 bits of input gets zeroed out. The remainder of the output stream alternates between blocks of correct output, blocks of zeroes, and on rare occasions blocks of 0xbebe. We have not found a consistent pattern for the order and frequency of these alternations. Unfortunately we ran out of time before we were able to resolve this issue.
