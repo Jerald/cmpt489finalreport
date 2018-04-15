@@ -8,25 +8,25 @@ These packing operations are a critical piece of the Parabix Transposition algor
 
 Input 1:
 
-```json
+```c
 [ ABCD, EFGH, IJKL, MNOP ]
 ```
 
 Input 2:
 
-```json
+```c
 [ abcd, efgh, ijkl, mnop ]
 ```
 
 `hsimd_packh` output:
 
-```json
+```c
 [ AB, EF, IJ, MN, ab, ef, ij, mn ]
 ```
 
 `hsimd_packl` output:
 
-```json
+```c
 [ CD, GH, KL, OP, cd, gh, kl, op ]
 ```
 
