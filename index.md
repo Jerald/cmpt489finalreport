@@ -426,6 +426,8 @@ When we started, we were worried we weren't experienced enough for this course. 
 
 ### Future Work
 
+Although we have made a lot of progress, there is far more to be done using AVX-512. We've done preliminary research and/or investigation into a number of promising improvements which we think will benefit icgrep in the long run. There are also a number of operations we've already looked into and evaluated, so hopefully someone else doesn't have to repeat that work.
+
 #### `simd_pext` and `simd_pdep`
 
 We explored the possibility of improving the performance of `pext` and `pdep` using the capabilities of AVX512F and AVX512BW as those are the subfamilies which we currently have hardware support for. Unfortunately, we reached the conclusion that we could not make improvements over the default `IDISA_Builder` implementation as AVX512F and AVX512BW lack the capability to address and manipulate individual bits.
