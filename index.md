@@ -403,7 +403,24 @@ Well, it's been a long, difficult, and interesting road for us. But in the end, 
 
 ### Lessons Learned
 
+Throughout this project we had our ups, our downs, and our side-ways. We learned far more about far weirder things than we would've ever immagined. It's hard for us to come up with a comprehensive list, so here are a few of the ones we thought were most important.
 
+
+##### The Basics
+
+When we started this course we had zero experience with any relevant software or development techniques. We were only vaguely familiar with SIMD technology from having it off-handedly mentioned when we took CMPT 295. A lot of what we did was simply experimenting with and discovering new things about, LLVM and the Parabix framework. Through this process, we actually became reasonably competant with developing for icgrep and LLVM.
+
+##### For problem solving:
+
+You don't necessarily need to find vector-specific solutions to problems. In some cases, as with popcount, you can find a scalar solution which can be applied easily to vectorized cases.
+
+##### If a solution isn't working:
+
+Sometimes a solution which uses less IR and, should at least, use less assembly can still be worse than an existing solution. This was something that came up a few times, notably with `bitblock_advance` and also somewhat in the case of our unselectable intrinsic.
+
+##### And most importantly:
+ 
+When we started, we were worried we weren't experienced enough for this course. With us being only second year's, we were worried we wouldn't have the skills to do well. But in the end, the lesson we took from this experience is that if you're offered the opportunity to push the boundries of what you can do, maybe give it a thought.
 
 ---
 
@@ -415,8 +432,16 @@ We explored the possibility of improving the performance of `pext` and `pdep` us
 
 It remains an open question whether or not future instruction set extensions will unlock new possibilities with pext and pdep. A better implementation might be possible with AVX512VBMI or AVX512VBMI2. It is also possible that better options exist outside of the AVX512 family.
 
+---
+
 #### Shuffle Vectors
 
-
+---
 
 #### Arbitrary Bit Shift
+
+---
+
+#### u8u16
+
+In it's current state, `u8u16` is not working correctly when run with a blocksize of 512. Currently `u8u16` will give the correct output on the first 512 bits of input it ingests. The output corresponding to the next 512 bits of input gets zeroed out. The remainder of the output stream alternates between blocks of correct output, blocks of zeroes, and on rare occasions blocks of 0xbebe. We have not found a consistent pattern for the order and frequency of these alternations.
