@@ -1,6 +1,6 @@
 # Introduction
 
-We are Team AVX-512. "We" consists of Avery Crespi, Cole Greer, and Oscar Smith-Sieger. Our project was a journey through the depths of LLVM, icgrep, and the AVX-512 spec. In the end, we learned a lot, discovered some neat things, and gained a disconcerting appreciation for SIMD technology.
+We are Team 512. "We" consists of Avery Crespi, Cole Greer, and Oscar Smith-Sieger. Our project was a journey through the depths of LLVM, icgrep, and the AVX-512 spec. In the end, we learned a lot, discovered some neat things, and gained a disconcerting appreciation for SIMD technology.
 
 ### Where It All Began
 
@@ -11,6 +11,8 @@ When we started we had one simple goal:
 At that point in time icgrep had no specific support for AVX-512. And in fact, many of the operations fell back to incorrectly optimized operations designed for other instruction sets.
 
 We quickly realized that "improving performance" is no simple task. Icgrep, and not to mention LLVM, is an incredibly complex and interconnected piece of technology. Simply finding where to begin was a challenge for us at the start. But eventually, we did become aquainted with everything and started to make some headway.
+
+---
 
 ### The Real Goals
 
@@ -26,12 +28,15 @@ Once things actually started progressing, we set ourselves a number of goals. So
 
 Though we were sure to keep our eyes out for any other operations we found along the way which could be improved.
 
+---
+
 ### Our Tools Of The Trade
 
 In a project such as ours, one based around improving the execution of algorithms using newly available tools, we had two directions to head. The first was to rework and reengineer the existing algorithms in ways that facilitated and utilized the new AVX-512 features. The second was to analyze the existing processes and look for cases where they can be improved by direct application of new AVX-512 tools. The latter, honestly far easier path, was the one we chose.
 
 This meant that the primary means by which we were looking to improve things was through discovering new and interesting LLVM Intrinsics which could be applied in unique ways. This of course was heavily facilitated by the existence of the Intel Intrinsics Guide, albeit it was not quite as useful as we originally would've hoped. Through our adventures, we found LLVM and its Intrinsics were a whole different beast than the Intel ones we had information on. But that's a story for another section; in due time all will be revealed.
 
+---
 
 # General Work
 
@@ -43,10 +48,11 @@ Most of these "other" things we worked on were about improving the design or arc
 
 Probably the largest of these changes is what we're calling Dynamic Feature Detection. It is.. <insert cole stuff here!>
 
+---
+
 ### Overrides To Other IDISA Implementations
 
 The next general thing we worked on was adding specific overrides to the AVX-512 code that pointed to other IDISA implementations. This was because, by default, if we didn't specify an implementation the code fell down to the basic IDISA version. Turns out, those weren't exactly the most efficient implementation in all cases.
-
 
 #### What We Did
 
@@ -58,6 +64,7 @@ From there, we went and found every function overridden in a previous builder, o
 
 The biggest improvement by far from this change was inheriting the SSE2 implementation of `bitblock_advance`. This version has been optimized quite well, and offered a nearly 30% runtime improvement for large files.
 
+---
 
 # Challenges
 
@@ -114,6 +121,8 @@ As it turns out, within `Intrinsic<>`, the first part in brackets is what the in
 
 Using everything we found out, we, in true compsci fashion, created a script to do all this hard work for us. Simply provided with an Intel Intrinsic, it will tell us the GCC Builtin, LLVM Intrinsic, source header, `immintrin.h` definition, and even the LLVM usage. Although being completely unrelated to any actual improvements in icgrep or Parabix, this was actually one of the most useful breakthroughs in our opinion. Because of this, we've included a cleaned up and optimized version of our script in appendix <INSERT APENDIX NUMBER HERE!>. We hope it can perhaps offer as much help, and save as much pain, for others as it has for us.
 
+---
+
 ### LLVM
 
 With all the talk about how much trouble we had with LLVM related things, you might think we've already covered our troubles with LLVM. I wish that were true, but this is only the beginning. We don't call it HeLLVM for nothing.
@@ -130,14 +139,17 @@ Our first thought was that we had somehow found an incorrect intrinsic, or were 
 
 It turns out that when LLVM said it "couldn't select" an instruction, it wasn't lying. It seems that the version of LLVM used in icgrep simply doesn't implement the ability to use the instruction we wanted. LLVM literally couldn't generate the right assembly because, as far as it was aware, the instruction didn't exist. We had hoped that when we finally got to the bottom of this issue, we would find some way to remedy it. But sadly, this is a problem we have no way to fix and can only hope has been found in modern versions of LLVM.
 
-
-
+---
 
 # Implementation Details
 
 ### hsimd_packh and hsimd_packl
 
+---
+
 ### esimd_popcount
+
+---
 
 ### `bitblock_add_with_carry`
 
@@ -207,6 +219,8 @@ llvm::Value * IDISA_AVX512BW_Builder::esimd_bitspread(unsigned fw, Value * bitma
     return IDISA_Builder::esimd_bitspread(fw, bitmask);
 }
 ```
+
+---
 
 # Implementation Evaluation
 
