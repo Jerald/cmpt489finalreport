@@ -48,13 +48,13 @@ Probably the largest of these changes is what we're calling Dynamic Feature Dete
 The next general thing we worked on was adding specific overrides to the AVX-512 code that pointed to other IDISA implementations. This was because, by default, if we didn't specify an implementation the code fell down to the basic IDISA version. Turns out, those weren't exactly the most efficient implementation in all cases.
 
 
-#### What we did
+#### What We Did
 
-At the beginning, just after AVX-512 support was added, our builder was inheriting only from the base IDISA builder. So our first step was to instead make it inherit from the AVX2 builder. But that caused the issue of the builder descending the inheritance tree to find the implementation to use. At first glance that may seem good, but the issue arose that many of the previous functions had been optimized for other block sizes and field widths. This caused a few cases where performance was actually *worse* then when we started. Notably, the AVX2 `bitblock_add_with_carry` isn't gated by a field width or bitblock width check and has a number of hardcoded values that, while good for AVX2, weren't optimal for AVX-512.
+At the beginning, just after AVX-512 support was added, our builder was inheriting only from the base IDISA builder. So our first step was to instead make it inherit from the AVX2 builder. But that caused the issue of the builder descending the inheritance tree to find the implementation to use. At first glance that may seem good, but the issue arose that many of the previous functions had been optimized for other block sizes and field widths. This caused a few cases where performance was actually *worse* then when we started. Notably, the AVX2 `hsimd_signmask` will fall through to the SSE implementation which contains no guards for field width or bitblock width. This causes a notable slow-down versus the base IDISA implementation.
 
 From there, we went and found every function overridden in a previous builder, other than the base IDISA builder, and overrode it in our builder. We were then able to precisely specify which version of a given operation we wanted to be using.
 
-#### How this helped
+#### How This Helped
 
 The biggest improvement by far from this change was inheriting the SSE2 implementation of `bitblock_advance`. This version has been optimized quite well, and offered a nearly 30% runtime improvement for large files.
 
@@ -117,6 +117,18 @@ Using everything we found out, we, in true compsci fashion, created a script to 
 ### LLVM
 
 With all the talk about how much trouble we had with LLVM related things, you might think we've already covered our troubles with LLVM. I wish that were true, but this is only the beginning. We don't call it HeLLVM for nothing.
+
+#### Being Selected
+
+A core part of LLVM's backend compilation phase is turning its IR into a sort of internal pseudo-assembly it uses to "select" the actually assembly instruction for a given backend. Relevant to us, this is the process which takes a given LLVM Intrinsic and correctly translates it to the relevant x86 assembly mnemonic. At least that's what it's supposed to do. We ran into a number of issues where LLVM returned an error saying it "couldn't select" an assembly instruction from one of our Intrinsics.
+
+#### Narrowing Down The Problem
+
+Our first thought was that we had somehow found an incorrect intrinsic, or were perhaps using it wrong. This took us delving deep into the LLVM source to look for the problem. What we found was that the Intrinsic did in fact exist, and we were in fact using it right. So what were we doing wrong? Unfortunately, the answer was *nothing*.
+
+#### Getting To The Bottom Of It
+
+It turns out that when LLVM said it "couldn't select" an instruction, it wasn't lying. It seems that the version of LLVM used in icgrep simply doesn't implement the ability to use the instruction we wanted. LLVM literally couldn't generate the right assembly because, as far as it was aware, the instruction didn't exist. We had hoped that when we finally got to the bottom of this issue, we would find some way to remedy it. But sadly, this is a problem we have no way to fix and can only hope has been found in modern versions of LLVM.
 
 
 
@@ -206,7 +218,7 @@ All tests were performed on the CSIL AVX-512 server `cs-osl-08`.
 
 Every test was run 10 times in succession, and the best result (shortest execution time) was taken.
 
-### Test details
+### Test Details
 
 We tested with a complex regular expression on a large input file in order to best represent the normal use case of icgrep.
 
@@ -220,7 +232,7 @@ Input file: /home/cameron/Wikimedia/dewiki-20150125-pages-articles.xml (14 GB Un
 
 We measured performance with the command `perf stat icgrep -c -r $regex $input -BlockSize=$size`, where `$regex` is the regex, `$input` is the input file, and `$size` is the block size.
 
-### Test results
+### Test Results
 
 "Original" icgrep refers to icgrep rev. 5968 without our changes (`packh` and `packl` reverted).
 
@@ -314,9 +326,9 @@ The performance of icgrep is significantly improved on CPUs that support AVX-512
 
 The increased blocksize and optimized hardware of CPUs with AVX-512 offer significant performance improvements for parallelized applications such as icgrep.
 
-With icgrep unchanged, `BlockSize=512` tested as 8.8% slower than `BlockSize=256`.
-
 In addition to these base advantages, our changes to icgrep leverage new AVX-512 intrinsics to further increase throughput and reduce run time.
+
+With icgrep unchanged, `BlockSize=512` tested as 8.8% slower than `BlockSize=256`.
 
 With our changes, `BlockSize=512` tested as 16.9% faster than `BlockSize=256`.
 
