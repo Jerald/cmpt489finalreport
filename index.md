@@ -427,23 +427,19 @@ When we started, we were worried we weren't experienced enough for this course. 
 
 Although we have made a lot of progress, there is far more to be done using AVX-512. We've done preliminary research and/or investigation into a number of promising improvements which we think will benefit icgrep in the long run. There are also a number of operations we've already looked into and evaluated, so hopefully someone else doesn't have to repeat that work.
 
-#### `simd_pext` and `simd_pdep`
+##### `simd_pext` and `simd_pdep`
 
 We explored the possibility of improving the performance of `pext` and `pdep` using the capabilities of AVX512F and AVX512BW as those are the subfamilies which we currently have hardware support for. Unfortunately, we reached the conclusion that we could not make improvements over the default `IDISA_Builder` implementation as AVX512F and AVX512BW lack the capability to address and manipulate individual bits.
 
 It remains an open question whether or not future instruction set extensions will unlock new possibilities with pext and pdep. A better implementation might be possible with AVX512VBMI or AVX512VBMI2. It is also possible that better options exist outside of the AVX512 family.
 
----
-
-#### Shuffle Vectors
+##### Shuffle Vectors
 
 Coming with AVX-512 are a number of new permutation operations. These provide the ability to convert a number of specific shuffle vector operations into exact intrinsics. The specific family are the `permutex2var` set. There are a number of different Intel Intrinsics matching this for a number of different field widths. These can be used to permute from two inputs, similar to how the LLVM IR `shufflevector` instruction works.
 
 Implementing some sort of override for using these has the possibility to improve a number of different operations in specific cases. 
 
----
-
-#### Arbitrary Bit Shift
+##### Arbitrary Bit Shift
 
 One of the limitations in AVX-512 is the lack of bit-specific or bit-granular operations. This can make a lot of attempts at optimization difficult because IDISA makes use of many bit-level operation. Utilizing multiple new AVX-512 instructions has the possibility to allow for arbitrary shifting at a bit-specific level.
 
@@ -451,8 +447,6 @@ The proposed method we have uses some of the new bit rotate operations, such as 
 
 These two operations combined have the ability to allow selecting and shifting of an arbitrary bit amount. Unfortunately, because the align operations work on 128-bit lanes or larger, and the rotates only work on 64-bit quads or smaller, you can only effectively work on every second quad. This means that for a 512-bit vector register, you can only process an effective 256-bits of data.
 
----
-
-#### u8u16
+##### u8u16
 
 In it's current state, `u8u16` is not working correctly when run with a blocksize of 512. Currently `u8u16` will give the correct output on the first 512 bits of input it ingests. The output corresponding to the next 512 bits of input gets zeroed out. The remainder of the output stream alternates between blocks of correct output, blocks of zeroes, and on rare occasions blocks of 0xbebe. We have not found a consistent pattern for the order and frequency of these alternations.
