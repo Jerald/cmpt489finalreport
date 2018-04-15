@@ -72,3 +72,7 @@ We explored the possibility of improving the performance of pext and pdep using 
 ##### Future
 
 It remains an open question whether or not future instruction set extensions will unlock new possibilities with pext and pdep. A better implementation might be possible with AVX512VBMI or AVX512VBMI2. It is also possible that better options exist outside of the AVX512 family.
+
+##### u8u16
+
+In it's current state, `u8u16` is not working correctly when run with a blocksize of 512. Currently `u8u16` will give the correct output on the first 512 bits of input it ingests. The output corresponding to the next 512 bits of input gets zeroed out. The remainder of the output stream alternates between blocks of correct output, blocks of zeroes, and on rare occasions blocks of 0xbebe. We have not found a consistent pattern for the order and frequency of these alternations.
