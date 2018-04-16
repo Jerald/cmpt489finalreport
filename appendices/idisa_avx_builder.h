@@ -98,9 +98,9 @@ private:
             //hostCPUFeatures.hasAVX512VPOPCNTDQ have not been tested as we
             //did not have hardware support. It should work in theory (tm)
 
-            hostCPUFeatures.hasAVX512VBMI = features.lookup("avx512vbmi");
-            hostCPUFeatures.hasAVX512VBMI2 = features.lookup("avx512vbmi2");
-            hostCPUFeatures.hasAVX512VPOPCNTDQ = features.lookup("avx512vpopcntdq");
+            hostCPUFeatures.hasAVX512VBMI = features.lookup("avx512_vbmi");
+            hostCPUFeatures.hasAVX512VBMI2 = features.lookup("avx512_vbmi2");
+            hostCPUFeatures.hasAVX512VPOPCNTDQ = features.lookup("avx512_vpopcntdq");
         }
     }
 
