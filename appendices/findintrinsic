@@ -1,0 +1,107 @@
+#!/bin/bash
+
+#Usage:
+#Arg 1 is the full name of the intel intrinsic to look for. May have unpredictable results with partial names.
+
+# Basically no real way to guess this, so please set this based on your install
+icgrepPath="$HOME/icgrep-devel"
+# Seriously, set this ^
+
+###################################################################################################
+
+reset=$(echo "\e[0m")
+red=$(echo "\e[0;31m")
+bold=$(echo "\e[1m")
+
+tab=$(echo -ne "\t")
+newline=$(echo -ne "\n")
+
+# Finds the path of the latest version of GCC and uses that
+cd /usr/lib/gcc/x86_64*/
+possibleGCCPaths=($("pwd")/*)
+gccPath=${possibleGCCPaths[-1]}
+
+# Stops bash from turning some of the messy strings into arrays
+# Backup is because sometimes it can be bad not to? Internet says so.
+backupIFS=$IFS
+IFS=""
+
+# Prints arg1 text with pretty printed arg2 concatanated to the end
+pPrint()
+{
+    echo -e "$1$bold$2$reset"
+}
+
+if [ "$1" == "help" ] || [ "$1" == "-help" ] || [ "$1" == "--help" ]
+then
+    echo
+    pPrint "Your icgrep path is set to: " $icgrepPath
+    echo "If this is wrong, please edit the file and change it to the correct path"
+
+    echo
+
+    echo -e "$bold$(echo "Usage:")$reset the first argument is the name of an intel intrinsic to serach for."
+
+    echo
+
+    echo "The script will then return a bunch of information about the intrinsic including:"
+    echo "the usage in terms of a GCC Builtin, said corresponding GCC Builtin, its equivalent LLVM intrinsic, the return type of the LLVM intrinsic, and the paramater type of the LLVM intrinsic."
+    
+    echo
+
+    exit 0
+fi
+
+
+# Greps for the supplied intrinsic in the gcc include directory. Then greps through that output ant matches only to the relevant gcc builtin
+gccbuiltin=$(grep -r -F -m 1 -A 3 "$1" $gccPath/include/* | grep -o -E "__builtin(_[[:alnum:]]*)+")
+
+# Greps through the Intrinsics file for an entry that matches the gcc builtin. Then greps through the line to find just the actual intrinsic.
+intrinsic=$(grep $gccbuiltin $icgrepPath/libllvm/include/llvm/IR/Intrinsics.gen | grep -o "Intrinsic.*;" | sed -r "s/;//g")
+
+# Greps though the gcc include directory again, but with line numbers. Does some magic on newlines and eventually greps for the header file the intel intrinsic was in.
+headerinfo=$(grep -r -F -n -m 1 -A 7 "$1" $gccPath/include/* | grep -zo "{.*}" | sed "s/\x0//g" | grep -m 1 -o "^.*\-[0-9]*\-\s" | grep -o "avx512[[:alpha:]]*intrin\.h\-[0-9]*\-")
+
+# Once again greps through the gcc include directory, this time for the return statement at the end of the intel intrinsic definition
+signature=$(grep -r -h -m 1 -A 7 "$1" $gccPath/include/* | grep -zo "return.*;" | sed "s/\x0//g")
+# Filters the signature so that it's all formatted correctly
+signature=$(echo "$signature" | tr -d "\n" | sed -r "s/(\t|  )//g" | sed -r "s/,/,!#/g" | sed -r "s/__[a-zA-Z0-9_]* \(/&!#/g" | tr "!" "\n" | sed -r "s/#/\t\t/g")
+
+# Greps for the LLVM tablegen entry corresponding to the gcc builtin
+llvmsig=$(grep -h "$gccbuiltin" $icgrepPath/libllvm/include/llvm/IR/IntrinsicsX86.td -A 5)
+
+# Filters so we only get the GCCBuiltin and Intrinsic lines
+llvmsig=$(echo $llvmsig | sed -r "s/[[:cntrl:]]//g" | tr -d "\n" | sed -r "s/ //g" | sed -r "s/>(,|;)/>;/g" | tr ";" "\n"  | grep -E -o -m 2 "((GCCBuiltin)|(Intrinsic))<[^>]*>")
+
+# Expands out the intrinsic paramater list
+llvmsig=$(echo $llvmsig | sed -r "s/,/, /g")
+
+# Extracts just the builtin from the LLVM signature
+sigBuiltin=$(echo $llvmsig | grep -o -m 1 "GCCBuiltin<[^>]*>")
+# Extracts just the intrinsic from the LLVM signature
+sigIntrinsic=$(echo $llvmsig | grep -o -m 1 "Intrinsic<[^>]*>")
+# Extracts just the return type from the LLVM signature
+sigIntrinReturn=$(echo $sigIntrinsic | sed -r "s/],/]\n/g" | grep -o -m 1 "\[[^]]*\]")
+# Extracts just the paramater list from the LLVM Signature
+sigIntrinParams=$(echo $sigIntrinsic | sed -r "s/],/]\n/g" | grep -o -m 1 "\[[^]]*,[^]]*\]")
+
+echo
+
+pPrint "Header info: $tab" "$headerinfo"
+
+pPrint "Builtin: $tab" "$gccbuiltin"
+pPrint "Intrinsic: $tab" "$intrinsic"
+
+echo
+
+pPrint "Intel Usage: $tab" "$signature"
+
+echo 
+
+pPrint "LLVM Return: $tab" "$sigIntrinReturn"
+pPrint "LLVM Params: $tab" "$sigIntrinParams"
+
+echo
+
+# Restore IFS backup
+IFS=$backupIFS
