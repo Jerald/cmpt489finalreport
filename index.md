@@ -415,7 +415,7 @@ Sometimes a solution which uses less IR and, should at least, use less assembly 
 
 ##### And most importantly:
 
-When we started, we were worried we weren't experienced enough for this course. With us being only second year's, we were worried we wouldn't have the skills to do well. But in the end, the lesson we took from this experience is that if you're offered the opportunity to push the boundries of what you can do, maybe give it a thought.
+When we started, we were worried we weren't experienced enough for this course. With us being only second year's, we were worried we wouldn't have the skills to do well. But in the end, the lesson we took from this experience is that if you're offered the opportunity to push the boundaries of what you can do, maybe give it a thought.
 
 ---
 
