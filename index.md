@@ -54,7 +54,7 @@ In the average use case with a "normal" CPU, dynamic feature detection doesn't o
 
 ### Overrides To Other IDISA Implementations
 
-The next general thing we worked on was adding specific overrides to the AVX-512 code that pointed to other IDISA implementations. This was because, by default, if we didn't specify an implementation the code fell down to the basic IDISA version. Turns out, those weren't exactly the most efficient implementation in all cases.
+The next general thing we worked on was adding specific overrides to the AVX-512 code that pointed to other IDISA implementations. This was because, by default, if we didn't specify an implementation the code fell down to the basic IDISA version. Turns out, those weren't exactly the most efficient implementations in all cases.
 
 #### What We Did
 
@@ -399,7 +399,7 @@ Well, it's been a long, difficult, and interesting road for us. But in the end, 
 
 ### Lessons Learned
 
-Throughout this project we had our ups, our downs, and our side-ways. We learned far more about far weirder things than we would've ever immagined. It's hard for us to come up with a comprehensive list, so here are a few of the ones we thought were most important.
+Throughout this project we had our ups, our downs, and our side-ways. We learned far more about far weirder things than we would've ever imagined. It's hard for us to come up with a comprehensive list, so here are a few of the ones we thought were most important.
 
 ##### The Basics
 
