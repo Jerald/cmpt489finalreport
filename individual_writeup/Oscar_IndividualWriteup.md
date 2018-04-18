@@ -1,3 +1,5 @@
+> This file formally lives [in our final report repo](https://github.com/Jerald/cmpt489finalreport/blob/master/individual_writeup/Oscar_IndividualWriteup.md) and can be viewed there if you so choose.
+
 # Oscar's Individual Write-up
 
 This project has been one of the most interesting, difficult, and educational experiences I've had in a long time. Right from the start we were out of our depth, but we quickly made the best of the situation and found our footing, however unstable.
